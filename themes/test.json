@@ -1,0 +1,62 @@
+{
+  "mode": "dark",
+  "wallpaper": "/home/max/Pictures/Wallpapers/nord-mountains.jpg",
+
+  "colors": {
+    "background": "#2E3440",
+    "background_on": "#ECEFF4",
+    "background_muted": "#4C566A",
+
+    "surface": "#3B4252",
+    "surface_on": "#ECEFF4",
+    "surface_muted": "#434C5E",
+
+    "primary": "#88C0D0",
+    "primary_on": "#2E3440",
+    "primary_muted": "#81A1C1",
+
+    "secondary": "#81A1C1",
+    "secondary_on": "#ECEFF4",
+    "secondary_muted": "#5E81AC",
+
+    "tertiary": "#B48EAD",
+    "tertiary_on": "#ECEFF4",
+    "tertiary_muted": "#A97EA1",
+
+    "success": "#A3BE8C",
+    "success_on": "#2E3440",
+    "success_muted": "#8FBC8F",
+
+    "warning": "#EBCB8B",
+    "warning_on": "#2E3440",
+    "warning_muted": "#D8B26E",
+
+    "error": "#BF616A",
+    "error_on": "#ECEFF4",
+    "error_muted": "#D08770",
+
+    "info": "#5E81AC",
+    "info_on": "#ECEFF4",
+    "info_muted": "#81A1C1",
+
+    "border": "#4C566A",
+    "outline": "#81A1C1",
+    "selection": "#434C5E",
+    "focus": "#88C0D0",
+    "shadow": "#1E222A",
+    "link": "#88C0D0",
+
+    "palette": {
+      "red": "#BF616A",
+      "green": "#A3BE8C",
+      "blue": "#5E81AC",
+      "yellow": "#EBCB8B",
+      "orange": "#D08770",
+      "purple": "#B48EAD",
+      "cyan": "#8FBCBB",
+      "pink": "#E85D9E",
+      "gray": "#4C566A",
+      "brown": "#A0744C"
+    }
+  }
+}
