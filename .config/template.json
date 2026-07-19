@@ -3,13 +3,13 @@
     "templates": [
         {
             "source_file": "./templates/test.lua",
-            "output_file": "/home/coder/themerium-switcheratus/test.lua",
+            "output_file": "/home/coder/chromarium-mechanicus/test.lua",
             "pre_hook": "echo this is a prehook",
             "post_hook": "echo this is a posthook"
         },
         {
             "source_file": "./templates/test.json",
-            "output_file": "/home/coder/themerium-switcheratus/test.json",
+            "output_file": "/home/coder/chromarium-mechanicus/test.json",
             "pre_hook": "echo this is a prehook",
             "post_hook": "echo this is a posthook"
         }

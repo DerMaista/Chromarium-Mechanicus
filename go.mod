@@ -1,4 +1,4 @@
-module themerium-switcheratus
+module chromarium-mechanicus
 
 go 1.22.2
 

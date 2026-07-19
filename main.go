@@ -21,9 +21,9 @@ type Config struct {
 }
 
 func findConfigFile(file string) string {
-	file, err := xdg.ConfigFile("themerium-switcheratus/" + file)
+	file, err := xdg.ConfigFile("chromarium-mechanicus/" + file)
 	if err != nil {
-		log.Fatal(file, "doesnt exist => save at", xdg.ConfigDirs, "themerium-switcheratus/"+file)
+		log.Fatal(file, "doesnt exist => save at", xdg.ConfigDirs, "chromarium-mechanicus/"+file)
 		return ""
 	}
 	
@@ -32,8 +32,8 @@ func findConfigFile(file string) string {
 
 var (
 	debug        = kingpin.Flag("debug", "Enable debug mode.").Short('v').Bool()
-	configFile   = kingpin.Flag("config", "alternative config file to use instead of xdgConfigHome/themerium-switcheratus/config.json").Short('c').Default(findConfigFile("config.json")).File()
-	templateFile = kingpin.Flag("template", "alternative template file to use instead of xdgConfigHome/themerium-switcheratus/template.json").Short('t').Default(findConfigFile("template.json")).File()
+	configFile   = kingpin.Flag("config", "alternative config file to use instead of xdgConfigHome/chromarium-mechanicus/config.json").Short('c').Default(findConfigFile("config.json")).File()
+	templateFile = kingpin.Flag("template", "alternative template file to use instead of xdgConfigHome/chromarium-mechanicus/template.json").Short('t').Default(findConfigFile("template.json")).File()
 	templatesDir = kingpin.Flag("templatesDir", "alternative directory to resolve relatives paths inside the template.json file to").Default(findConfigFile("")).String()
 	themeName    = kingpin.Arg("theme", "Theme to use.").Required().String()
 )
