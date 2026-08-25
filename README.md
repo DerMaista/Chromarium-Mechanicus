@@ -1,3 +1,3 @@
 ```
-go run main.go -c .config/config.json -t .config/template.json --templatesDir $HOME/chromarium-mechanicus/.config/ test
+go run main.go -t .config/template.json --templatesDir .config/ --themesDir themes test
 ```
