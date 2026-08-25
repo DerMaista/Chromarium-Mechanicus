@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"log/slog"
@@ -17,7 +16,7 @@ import (
 )
 
 type Config struct {
-	ThemesDir string `json:"themesDir"`
+	ThemesDir Path `json:"themesDir"`
 }
 
 func findConfigFile(file string) string {
@@ -26,56 +25,72 @@ func findConfigFile(file string) string {
 		log.Fatal(file, "doesnt exist => save at", xdg.ConfigDirs, "chromarium-mechanicus/"+file)
 		return ""
 	}
-	
+
 	return file
 }
 
-var (
-	debug        = kingpin.Flag("debug", "Enable debug mode.").Short('v').Bool()
-	configFile   = kingpin.Flag("config", "alternative config file to use instead of xdgConfigHome/chromarium-mechanicus/config.json").Short('c').Default(findConfigFile("config.json")).File()
-	templateFile = kingpin.Flag("template", "alternative template file to use instead of xdgConfigHome/chromarium-mechanicus/template.json").Short('t').Default(findConfigFile("template.json")).File()
-	templatesDir = kingpin.Flag("templatesDir", "alternative directory to resolve relatives paths inside the template.json file to").Default(findConfigFile("")).String()
-	themeName    = kingpin.Arg("theme", "Theme to use.").Required().String()
-)
-
-func initConfig() (Config, error) {
-
-	kingpin.Parse()
-
-	programLevel := new(slog.LevelVar)
-	programLevel.Set(slog.LevelInfo)
-	if *debug {
-		programLevel.Set(slog.LevelDebug)
-	}
-	handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: programLevel})
-	logger := slog.New(handler)
-	slog.SetDefault(logger)
-
-	slog.Debug(fmt.Sprintf("using config File: %s", (**configFile).Name()))
-
+func loadConfig(path string, mustExist bool) Config {
 	var config Config
 
-	ReadJson(*configFile, &config)
+	file, err := os.Open(path)
+	if err != nil {
+		if mustExist {
+			log.Fatalf("error opening config file %s: %s", path, err)
+		}
+		slog.Debug("no config file at " + path + ", using defaults")
+		return config
+	}
+	defer file.Close()
 
-	return config, nil
+	ReadJson(file, &config)
+	if config.ThemesDir != "" {
+		config.ThemesDir.Resolve(filepath.Dir(path))
+	}
 
+	return config
 }
+
+func findConfigDir(dir string) string {
+	dir, err := xdg.ConfigFile("chromarium-mechanicus/" + dir)
+	if err != nil {
+		log.Fatal(dir, "doesnt exist => save at", xdg.ConfigDirs, "chromarium-mechanicus/"+dir)
+		return ""
+	}
+	return dir
+}
+
+var (
+	configFileSetByUser bool
+	themesDirSetByUser  bool
+)
+
+var (
+	debug        = kingpin.Flag("debug", "Enable debug mode.").Short('v').Bool()
+	configFile   = kingpin.Flag("config", "alternative config file to use instead of xdgConfigHome/chromarium-mechanicus/config.json").Short('c').IsSetByUser(&configFileSetByUser).Default(findConfigFile("config.json")).String()
+	templateFile = kingpin.Flag("template", "alternative template file to use instead of xdgConfigHome/chromarium-mechanicus/template.json").Short('t').Default(findConfigFile("template.json")).File()
+	templatesDir = kingpin.Flag("templatesDir", "alternative directory to resolve relatives paths inside the template.json file to").Default(findConfigFile("")).String()
+	themesDir    = kingpin.Flag("themesDir", "alternative directory to search for themes in").IsSetByUser(&themesDirSetByUser).Default(findConfigDir("themes")).String()
+	themeName    = kingpin.Arg("theme", "Theme to use.").Required().String()
+)
 
 type Color string
 
 type Path string
 
 func (p *Path) Resolve(baseDir string) Path {
-	if filepath.IsAbs(string(*p)) {
-		*p = Path(filepath.Clean(string(*p)))
-		return *p
-	} else if filepath.IsLocal(string(*p)) {
-		*p = Path(filepath.Clean(filepath.Join(baseDir, string(*p))))
-		return *p
-	} else {
-		log.Fatal("could not resolve Path: " + string(*p))
+	// Expand first: "$HOME/foo" is absolute once expanded and must not be
+	// joined onto baseDir.
+	p.ResolveEnv()
+	if !filepath.IsAbs(string(*p)) {
+		*p = Path(filepath.Join(baseDir, string(*p)))
 	}
-	return ""
+	*p = Path(filepath.Clean(string(*p)))
+	return *p
+}
+
+func (p *Path) ResolveEnv() Path {
+	*p = Path(os.ExpandEnv(string(*p)))
+	return *p
 }
 
 func (p Path) Open() *os.File {
@@ -104,6 +119,7 @@ func ReadJson(file *os.File, v any) {
 }
 
 type TemplateFile []byte
+
 func ReadTemplate(template *os.File) TemplateFile {
 	return TemplateFile(ReadFile(template))
 }
@@ -252,18 +268,27 @@ func initTemplates() (Templates, error) {
 }
 
 func main() {
-	config, err := initConfig()
-	if err != nil {
-		return
-	}
-	slog.Debug("Using theme: " + config.ThemesDir + "/" + *themeName + ".json")
+	kingpin.Parse()
 
-	theme, err := loadTheme(*themeName, config.ThemesDir)
+	if *debug {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	}
+
+	config := loadConfig(*configFile, configFileSetByUser)
+	if !themesDirSetByUser && config.ThemesDir != "" {
+		*themesDir = string(config.ThemesDir)
+	}
+
+	theme, err := loadTheme(*themeName, *themesDir)
 	if err != nil {
 		return
 	}
 
 	templates, err := initTemplates()
+	if err != nil {
+		slog.Error("error reading templates: " + err.Error())
+		return
+	}
 
 	out, err := templates.WallpaperCmd.Replace(theme).Run()
 	if err != nil {
@@ -284,10 +309,13 @@ func main() {
 		defer templateFile.Close()
 		byteTemplate := ReadTemplate(templateFile)
 		byteTemplate.Replace(theme)
-		
-		err = os.WriteFile(string(t.OutputFile.Resolve("")), byteTemplate, 0644)
-		if err != nil {
-			panic(err)
+
+		outputFile := string(t.OutputFile.Resolve(""))
+		if err := os.MkdirAll(filepath.Dir(outputFile), 0755); err != nil {
+			log.Fatalf("error creating output directory for %s: %s", outputFile, err)
+		}
+		if err := os.WriteFile(outputFile, byteTemplate, 0644); err != nil {
+			log.Fatalf("error writing %s: %s", outputFile, err)
 		}
 
 		out, err = t.PostHook.Replace(theme).Run()
