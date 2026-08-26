@@ -174,7 +174,7 @@ type Colors struct {
 	// Backgrounds
 	Background Color `json:"background"`
 	Primary    Color `json:"primary"`
-	Accent     Color `json:"secondary"`
+	Accent     Color `json:"accent"`
 
 	Palette Palette `json:"palette"`
 }
