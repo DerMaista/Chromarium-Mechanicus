@@ -172,51 +172,9 @@ type Theme struct {
 
 type Colors struct {
 	// Backgrounds
-	Background      Color `json:"background"`
-	BackgroundOn    Color `json:"background_on"`
-	BackgroundMuted Color `json:"background_muted"`
-
-	Surface      Color `json:"surface"`
-	SurfaceOn    Color `json:"surface_on"`
-	SurfaceMuted Color `json:"surface_muted"`
-
-	// Brand colors
-	Primary      Color `json:"primary"`
-	PrimaryOn    Color `json:"primary_on"`
-	PrimaryMuted Color `json:"primary_muted"`
-
-	Secondary      Color `json:"secondary"`
-	SecondaryOn    Color `json:"secondary_on"`
-	SecondaryMuted Color `json:"secondary_muted"`
-
-	Tertiary      Color `json:"tertiary"`
-	TertiaryOn    Color `json:"tertiary_on"`
-	TertiaryMuted Color `json:"tertiary_muted"`
-
-	// Status colors
-	Success      Color `json:"success"`
-	SuccessOn    Color `json:"success_on"`
-	SuccessMuted Color `json:"success_muted"`
-
-	Warning      Color `json:"warning"`
-	WarningOn    Color `json:"warning_on"`
-	WarningMuted Color `json:"warning_muted"`
-
-	Error      Color `json:"error"`
-	ErrorOn    Color `json:"error_on"`
-	ErrorMuted Color `json:"error_muted"`
-
-	Info      Color `json:"info"`
-	InfoOn    Color `json:"info_on"`
-	InfoMuted Color `json:"info_muted"`
-
-	// Miscellaneous UI colors
-	Border    Color `json:"border"`
-	Outline   Color `json:"outline"`
-	Selection Color `json:"selection"`
-	Focus     Color `json:"focus"`
-	Shadow    Color `json:"shadow"`
-	Link      Color `json:"link"`
+	Background Color `json:"background"`
+	Primary    Color `json:"primary"`
+	Accent     Color `json:"secondary"`
 
 	Palette Palette `json:"palette"`
 }
