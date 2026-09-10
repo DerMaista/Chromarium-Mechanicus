@@ -1,2 +1,6 @@
 *test*
 /result
+
+# ...but the module test suite is not scratch output.
+!nix/tests/
+!nix/tests/**
