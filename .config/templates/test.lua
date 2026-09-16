@@ -1,3 +1,3 @@
 function Huhu()
-    color1 = {{.Colors.Primary}}
+    color1 = {{.colors.primary}}
 end

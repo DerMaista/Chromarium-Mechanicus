@@ -50,6 +50,20 @@ func loadConfig(path string, mustExist bool) Config {
 	return config
 }
 
+func saveCurrentTheme(themeName string) {
+	file, err := xdg.StateFile("chromarium-mechanicus/current-theme")
+	if err != nil {
+		slog.Error("error resolving state file: " + err.Error())
+		return
+	}
+
+	if err := os.WriteFile(file, []byte(themeName+"\n"), 0644); err != nil {
+		slog.Error("error writing current theme to " + file + ": " + err.Error())
+		return
+	}
+	slog.Debug("saved current theme to " + file)
+}
+
 func findConfigDir(dir string) string {
 	dir, err := xdg.ConfigFile("chromarium-mechanicus/" + dir)
 	if err != nil {
@@ -73,13 +87,9 @@ var (
 	themeName    = kingpin.Arg("theme", "Theme to use.").Required().String()
 )
 
-type Color string
-
 type Path string
 
 func (p *Path) Resolve(baseDir string) Path {
-	// Expand first: "$HOME/foo" is absolute once expanded and must not be
-	// joined onto baseDir.
 	p.ResolveEnv()
 	if !filepath.IsAbs(string(*p)) {
 		*p = Path(filepath.Join(baseDir, string(*p)))
@@ -124,13 +134,16 @@ func ReadTemplate(template *os.File) TemplateFile {
 	return TemplateFile(ReadFile(template))
 }
 func (f *TemplateFile) Replace(data any) TemplateFile {
-	t, err := template.New("template").Parse(string(*f))
+	t, err := template.New("template").Option("missingkey=error").Parse(string(*f))
 	if err != nil {
-		log.Fatalf("error replacing %v: %s", f, err)
+		log.Fatalf("error parsing template: %s", err)
 		return nil
 	}
 	var b bytes.Buffer
-	err = t.Execute(&b, data)
+	if err := t.Execute(&b, data); err != nil {
+		log.Fatalf("error rendering template: %s", err)
+		return nil
+	}
 	*f = TemplateFile(b.String())
 
 	return *f
@@ -144,63 +157,39 @@ func (c Cmd) Run() ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 func (c *Cmd) Replace(data any) Cmd {
-	t, err := template.New("cmd").Parse(string(*c))
+	t, err := template.New("cmd").Option("missingkey=error").Parse(string(*c))
 	if err != nil {
-		log.Fatalf("error replacing %v: %s", c, err)
+		log.Fatalf("error parsing command %q: %s", string(*c), err)
 		return *c
 	}
 
 	var b bytes.Buffer
-	err = t.Execute(&b, data)
+	if err := t.Execute(&b, data); err != nil {
+		log.Fatalf("error rendering command %q: %s", string(*c), err)
+		return *c
+	}
 	*c = Cmd(b.String())
 
 	return *c
 }
 
-type ThemeMode string
-
-const (
-	Light ThemeMode = "light"
-	Dark  ThemeMode = "dark"
-)
-
-type Theme struct {
-	Colors    Colors    `json:"colors"`
-	Wallpaper Path      `json:"wallpaper"` // Absolute path to wallpaper
-	Mode      ThemeMode `json:"mode"`      // "light" or "dark"
-}
-
-type Colors struct {
-	// Backgrounds
-	Background Color `json:"background"`
-	Primary    Color `json:"primary"`
-	Accent     Color `json:"accent"`
-
-	Palette Palette `json:"palette"`
-}
-
-type Palette struct {
-	Red    Color `json:"red"`
-	Green  Color `json:"green"`
-	Blue   Color `json:"blue"`
-	Yellow Color `json:"yellow"`
-	Orange Color `json:"orange"`
-	Purple Color `json:"purple"`
-	Cyan   Color `json:"cyan"`
-	Pink   Color `json:"pink"`
-	Gray   Color `json:"gray"`
-	Brown  Color `json:"brown"`
-}
+type Theme map[string]any
 
 func loadTheme(themeName string, themeDir string) (Theme, error) {
-	var theme Theme
+	theme := Theme{}
 
-	themeFile, err := os.Open(themeDir + "/" + themeName + ".json")
+	themeFile, err := os.Open(filepath.Join(themeDir, themeName+".json"))
 	if err != nil {
 		slog.Error("error opening theme file: " + err.Error())
 		return theme, err
 	}
+	defer themeFile.Close()
+
 	ReadJson(themeFile, &theme)
+
+	for k, v := range theme {
+		theme[k] = resolveColors(v)
+	}
 
 	return theme, nil
 }
@@ -284,4 +273,6 @@ func main() {
 		slog.Debug("PostHook out: " + string(out))
 
 	}
+
+	saveCurrentTheme(*themeName)
 }

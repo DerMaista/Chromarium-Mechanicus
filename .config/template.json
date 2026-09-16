@@ -1,5 +1,5 @@
 {
-    "wallpaper_cmd": "echo {{.Wallpaper}}",
+    "wallpaper_cmd": "echo {{.wallpaper}}",
     "templates": [
         {
             "source_file": "./templates/test.lua",

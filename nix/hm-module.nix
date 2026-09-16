@@ -1,6 +1,3 @@
-# `self` is this flake, applied when the module is imported. It must NOT also
-# be taken as a module argument: home-manager setups commonly pass their own
-# `self` through extraSpecialArgs, which would shadow this one.
 self:
 { config, lib, pkgs, ... }:
 
@@ -42,8 +39,8 @@ let
         type = types.nullOr types.lines;
         default = null;
         example = ''
-          @define-color background {{.Colors.Background}};
-          @define-color primary {{.Colors.Primary}};
+          @define-color background {{.colors.background}};
+          @define-color primary {{.colors.primary}};
         '';
         description = ''
           Template content written verbatim to the Nix store. Mutually
@@ -69,7 +66,7 @@ let
         example = "mkdir -p ~/.cache/foo";
         description = ''
           Shell command run before the template is rendered. The theme is
-          available for templating, e.g. `{{.Colors.Primary}}`.
+          available for templating, e.g. `{{.colors.primary}}`.
         '';
       };
 
@@ -79,7 +76,7 @@ let
         example = "systemctl --user restart waybar";
         description = ''
           Shell command run after the template is rendered. The theme is
-          available for templating, e.g. `{{.Wallpaper}}`.
+          available for templating, e.g. `{{.wallpaper}}`.
         '';
       };
     };
@@ -124,9 +121,9 @@ in
     wallpaperCmd = mkOption {
       type = types.nullOr types.str;
       default = null;
-      example = "swww img {{.Wallpaper}}";
+      example = "swww img {{.wallpaper}}";
       description = ''
-        Command used to set the wallpaper. `{{.Wallpaper}}` is replaced with
+        Command used to set the wallpaper. `{{.wallpaper}}` is replaced with
         the path to the theme's wallpaper image.
       '';
     };
@@ -255,11 +252,6 @@ in
       })
       cfg.themes;
 
-    # Re-apply the active theme after every activation, so a switch renders
-    # the templates against whatever config.json/template.json were just
-    # linked. No flags: the module installs everything at the locations the
-    # binary already looks in, and passing --config a store path would break
-    # the relative themesDir lookup main.go does against its parent directory.
     home.activation.chromarium-mechanicus =
       lib.hm.dag.entryAfter [ "linkGeneration" ] ''
         # A theme switched at runtime outranks the declarative default, so
