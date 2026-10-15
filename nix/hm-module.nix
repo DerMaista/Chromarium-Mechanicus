@@ -99,6 +99,20 @@ let
     templates = templateEntries;
   };
 
+  # Every *.json in themeFiles, keyed by file name without the extension.
+  # Explicit entries in themes win over a file of the same name.
+  themesFromFiles =
+    if cfg.themeFiles == null then
+      { }
+    else
+      lib.mapAttrs'
+        (file: _: lib.nameValuePair (lib.removeSuffix ".json" file) (cfg.themeFiles + "/${file}"))
+        (lib.filterAttrs
+          (file: kind: kind != "directory" && lib.hasSuffix ".json" file)
+          (builtins.readDir cfg.themeFiles));
+
+  allThemes = themesFromFiles // cfg.themes;
+
   settings = pruned { themesDir = cfg.themesDir; };
 
   themeStateFile =
@@ -201,6 +215,17 @@ in
       '';
     };
 
+    themeFiles = mkOption {
+      type = types.nullOr types.path;
+      default = null;
+      example = lib.literalExpression "./themes";
+      description = ''
+        Directory of theme files. Every {file}`*.json` in it is installed like
+        an entry in {option}`themes`, named after the file without its
+        extension. An entry in {option}`themes` with the same name wins.
+      '';
+    };
+
     themesDir = mkOption {
       type = types.nullOr types.str;
       default = null;
@@ -225,10 +250,11 @@ in
       })
       cfg.templates
     ++ [{
-      assertion = cfg.themes == { } || cfg.themesDir == null;
+      assertion = allThemes == { } || cfg.themesDir == null;
       message = ''
-        programs.chromarium-mechanicus: 'themes' installs into the default
-        themes directory, which 'themesDir' overrides. Set only one of them.
+        programs.chromarium-mechanicus: 'themes' and 'themeFiles' install into
+        the default themes directory, which 'themesDir' overrides. Set only
+        one of them.
       '';
     }];
 
@@ -250,7 +276,7 @@ in
           else
             jsonFormat.generate "chromarium-mechanicus-theme-${name}.json" theme;
       })
-      cfg.themes;
+      allThemes;
 
     home.activation.chromarium-mechanicus =
       lib.hm.dag.entryAfter [ "linkGeneration" ] ''

@@ -149,6 +149,9 @@ configuration:
       };
     };
 
+    # every *.json in ./themes, named after the file
+    themeFiles = ./themes;
+
     themes = {
       nord = ./themes/nord.json;
       # or as a Nix attribute set
@@ -178,9 +181,10 @@ chromarium-mechanicus nord
 | `templates.<name>.target` | Destination path, or a list of them. Relative paths are resolved against the home directory. |
 | `templates.<name>.preHook` / `.postHook` | Shell commands run before/after rendering, templated with the theme. |
 | `themes.<name>` | Theme file or attribute set, installed as `<name>.json`. |
+| `themeFiles` | Directory whose `*.json` files are installed as themes. `themes` wins on a name clash. |
 | `themesDir` | Look for themes elsewhere instead of the generated directory. |
 
 `templates` becomes
 `$XDG_CONFIG_HOME/chromarium-mechanicus/template.json`, `themesDir` becomes
-`config.json`, and `themes` are written to
+`config.json`, and `themes` and `themeFiles` are written to
 `$XDG_CONFIG_HOME/chromarium-mechanicus/themes/`.
