@@ -134,7 +134,7 @@ func ReadTemplate(template *os.File) TemplateFile {
 	return TemplateFile(ReadFile(template))
 }
 func (f *TemplateFile) Replace(data any) TemplateFile {
-	t, err := template.New("template").Option("missingkey=error").Parse(string(*f))
+	t, err := template.New("template").Option("missingkey=error").Funcs(funcs).Parse(string(*f))
 	if err != nil {
 		log.Fatalf("error parsing template: %s", err)
 		return nil
@@ -157,7 +157,7 @@ func (c Cmd) Run() ([]byte, error) {
 	return cmd.CombinedOutput()
 }
 func (c *Cmd) Replace(data any) Cmd {
-	t, err := template.New("cmd").Option("missingkey=error").Parse(string(*c))
+	t, err := template.New("cmd").Option("missingkey=error").Funcs(funcs).Parse(string(*c))
 	if err != nil {
 		log.Fatalf("error parsing command %q: %s", string(*c), err)
 		return *c

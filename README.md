@@ -90,6 +90,19 @@ Written bare, a color renders as `hex`, so `{{ .colors.primary }}` and
 `{{ .colors.primary.hex }}` are the same thing. Hex output is lowercase
 regardless of how the theme file wrote it.
 
+### Functions
+
+`mix a b weight` blends `a` toward `b` in sRGB space (`0` gives `a`, `1` gives
+`b`, alpha is blended too). Either side can be a theme color or a color
+string, and the result has all the formats above:
+
+```
+{{ mix .colors.background .colors.primary 0.5 }}    -> #5b7a88
+{{ (mix .colors.primary "#ffffff" 0.2).rgb }}       -> rgb(160, 205, 217)
+{{ with mix .colors.background .colors.primary 0.5 }}{{.red}};{{.green}};{{.blue}}{{end}}
+                                                    -> 91;122;136
+```
+
 ## Installation 
 
 install nix or smth

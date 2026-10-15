@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 )
 
 type Color map[string]string
@@ -232,4 +233,49 @@ func resolveColors(v any) any {
 		}
 	}
 	return v
+}
+
+var funcs = template.FuncMap{
+	"mix": mix,
+}
+
+// mix blends a toward b in sRGB space: weight 0 gives a, 1 gives b. Both
+// arguments may be theme colors or color strings.
+func mix(a, b any, weight float64) (Color, error) {
+	ca, err := toRGBA(a)
+	if err != nil {
+		return nil, err
+	}
+	cb, err := toRGBA(b)
+	if err != nil {
+		return nil, err
+	}
+	w := clamp(weight, 0, 1)
+	lerp := func(x, y uint8) uint8 {
+		return uint8(math.Round(float64(x) + (float64(y)-float64(x))*w))
+	}
+
+	return newColor(rgba{
+		r: lerp(ca.r, cb.r),
+		g: lerp(ca.g, cb.g),
+		b: lerp(ca.b, cb.b),
+		a: ca.a + (cb.a-ca.a)*w,
+	}), nil
+}
+
+func toRGBA(v any) (rgba, error) {
+	var s string
+	switch t := v.(type) {
+	case Color:
+		s = t["hex_alpha"]
+	case string:
+		s = t
+	default:
+		return rgba{}, fmt.Errorf("mix: %v is not a color", v)
+	}
+	c, ok := parseColor(s)
+	if !ok {
+		return rgba{}, fmt.Errorf("mix: %q is not a color", s)
+	}
+	return c, nil
 }
